@@ -151,10 +151,29 @@ export class HtmlReporter {
         .badge.info { background: #3498db; color: white; }
         .positive { color: #27ae60; margin: 10px 0; }
         .positive::before { content: "✓ "; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; font-weight: bold; }
+        th { background: #3498db; color: white; font-weight: bold; position: sticky; top: 0; }
         tr:hover { background: #f5f5f5; }
+        tr:nth-child(even) { background: #fafafa; }
+        .cookie-section, .script-section { 
+            background: white; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .section-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 15px 20px; 
+            margin: -20px -20px 20px -20px; 
+            border-radius: 8px 8px 0 0;
+            font-size: 1.3em;
+        }
+        .table-container { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+        .table-info { background: #e8f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
         .no-issues { text-align: center; padding: 40px; color: #27ae60; font-size: 1.2em; }
         @media print {
             body { background: white; padding: 0; }
@@ -174,10 +193,10 @@ export class HtmlReporter {
         </div>
 
         ${this.buildScoreSection(results)}
-        ${this.buildFrameworkSection(results)}
-        ${this.buildStatsSection(results)}
         ${this.buildCookieTablesSection(results)}
         ${this.buildScriptTablesSection(results)}
+        ${this.buildFrameworkSection(results)}
+        ${this.buildStatsSection(results)}
         ${this.buildIssuesSection(results)}
         ${this.buildRecommendationsSection(results)}
     </div>
@@ -265,76 +284,99 @@ export class HtmlReporter {
     const consentResults = results.rawData.consentResults;
     const scanResults = results.rawData.scanResults;
 
-    let html = '<h2>Cookie Analysis</h2>';
+    let html = '<div class="cookie-section">';
+    html += '<div class="section-header">🍪 COMPLETE COOKIE INVENTORY</div>';
 
-    // Cookies Before Consent
-    html += '<h3>Cookies Before Consent</h3>';
+    // Summary
+    html += '<div class="table-info">';
+    html += `<strong>Total Unique Cookies:</strong> ${scanResults.uniqueCookies.length} | `;
+    html += `<strong>Third-Party:</strong> ${scanResults.thirdPartyCookies.length} | `;
+    html += `<strong>Before Consent:</strong> ${consentResults.beforeConsent.cookies.length} | `;
+    html += `<strong>After Accept:</strong> ${consentResults.afterAcceptAll.cookies.length}`;
+    html += '</div>';
+
+    // Section 1: Cookies Before Consent (CRITICAL)
+    html += '<h3 style="color: #e74c3c; margin-top: 30px;">⚠️ Cookies Set BEFORE User Consent</h3>';
+    html += '<p>These cookies were set immediately upon page load, before any user interaction:</p>';
     if (consentResults.beforeConsent.cookies.length > 0) {
-      html += '<table><thead><tr>';
-      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th>Cookie Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th>';
       html += '</tr></thead><tbody>';
       
       for (const cookie of consentResults.beforeConsent.cookies) {
         const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
-        html += '<tr>';
-        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        const rowStyle = cookie.isThirdParty ? 'style="background: #ffe6e6;"' : '';
+        html += `<tr ${rowStyle}>`;
+        html += `<td><strong>${this.escapeHtml(cookie.name)}</strong></td>`;
         html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
         html += `<td>${this.escapeHtml(cookie.path)}</td>`;
-        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third-Party</span>' : '<span style="color: #27ae60;">First-Party</span>'}</td>`;
         html += `<td>${expiryDate}</td>`;
         html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
         html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.sameSite || 'None'}</td>`;
         html += '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
     } else {
-      html += '<p style="color: #27ae60;">✓ No cookies set before consent</p>';
+      html += '<p style="color: #27ae60; background: #e8f5e9; padding: 15px; border-radius: 4px;">✓ Excellent! No cookies set before consent.</p>';
     }
 
-    // Cookies After Accept All
-    html += '<h3>Cookies After Accept All</h3>';
+    // Section 2: Cookies After Accept All
+    html += '<h3 style="color: #2980b9; margin-top: 40px;">Cookies Set AFTER Accepting All</h3>';
+    html += '<p>These cookies were set after the user clicked "Accept All":</p>';
     if (consentResults.afterAcceptAll.cookies.length > 0) {
-      html += '<table><thead><tr>';
-      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th>Cookie Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th>';
       html += '</tr></thead><tbody>';
       
       for (const cookie of consentResults.afterAcceptAll.cookies) {
         const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
-        html += '<tr>';
-        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        const rowStyle = cookie.isThirdParty ? 'style="background: #fff3cd;"' : '';
+        html += `<tr ${rowStyle}>`;
+        html += `<td><strong>${this.escapeHtml(cookie.name)}</strong></td>`;
         html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
         html += `<td>${this.escapeHtml(cookie.path)}</td>`;
-        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third-Party</span>' : '<span style="color: #27ae60;">First-Party</span>'}</td>`;
         html += `<td>${expiryDate}</td>`;
         html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
         html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.sameSite || 'None'}</td>`;
         html += '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
     }
 
-    // All Unique Cookies
-    html += '<h3>All Unique Cookies Found</h3>';
+    // Section 3: ALL Unique Cookies Found
+    html += '<h3 style="color: #8e44ad; margin-top: 40px;">📋 Complete Cookie Inventory (All Pages)</h3>';
+    html += '<p>Every unique cookie found across all scanned pages:</p>';
     if (scanResults.uniqueCookies.length > 0) {
-      html += '<table><thead><tr>';
-      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th>Cookie Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th><th>Found On</th>';
       html += '</tr></thead><tbody>';
       
       for (const cookie of scanResults.uniqueCookies) {
         const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
-        html += '<tr>';
-        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        const rowStyle = cookie.isThirdParty ? 'style="background: #fff3cd;"' : '';
+        html += `<tr ${rowStyle}>`;
+        html += `<td><strong>${this.escapeHtml(cookie.name)}</strong></td>`;
         html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
         html += `<td>${this.escapeHtml(cookie.path)}</td>`;
-        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third-Party</span>' : '<span style="color: #27ae60;">First-Party</span>'}</td>`;
         html += `<td>${expiryDate}</td>`;
         html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
         html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.sameSite || 'None'}</td>`;
+        html += `<td style="font-size: 0.8em; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(cookie.foundOnUrl)}</td>`;
         html += '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
     }
 
+    html += '</div>';
     return html;
   }
 
@@ -344,48 +386,91 @@ export class HtmlReporter {
     const consentResults = results.rawData.consentResults;
     const scanResults = results.rawData.scanResults;
 
-    let html = '<h2>Script Analysis</h2>';
+    let html = '<div class="script-section">';
+    html += '<div class="section-header">📜 COMPLETE SCRIPT & TRACKER INVENTORY</div>';
 
-    // Scripts Before Consent
-    html += '<h3>Scripts Before Consent</h3>';
+    // Summary
+    html += '<div class="table-info">';
+    html += `<strong>Total Scripts:</strong> ${scanResults.uniqueScripts.length} | `;
+    html += `<strong>Third-Party:</strong> ${scanResults.thirdPartyScripts.length} | `;
+    html += `<strong>Before Consent:</strong> ${consentResults.beforeConsent.scripts.length}`;
+    html += '</div>';
+
+    // Section 1: Scripts Before Consent (CRITICAL)
+    html += '<h3 style="color: #e74c3c; margin-top: 30px;">⚠️ Scripts Loaded BEFORE User Consent</h3>';
+    html += '<p>These scripts executed immediately upon page load, before any user interaction:</p>';
     if (consentResults.beforeConsent.scripts.length > 0) {
-      html += '<table><thead><tr>';
-      html += '<th>Type</th><th>URL/Source</th><th>Third-Party</th><th>Category</th>';
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th style="width: 80px;">Type</th><th>URL/Source</th><th style="width: 100px;">Third-Party</th><th style="width: 120px;">Category</th><th style="width: 150px;">Vendor</th>';
       html += '</tr></thead><tbody>';
       
       for (const script of consentResults.beforeConsent.scripts) {
-        html += '<tr>';
+        const vendor = this.detectVendor(script.url);
+        const rowStyle = script.isThirdParty ? 'style="background: #ffe6e6;"' : '';
+        html += `<tr ${rowStyle}>`;
         html += `<td>${script.type === 'external' ? 'External' : 'Inline'}</td>`;
-        html += `<td style="word-break: break-all; max-width: 400px;">${this.escapeHtml(script.url)}</td>`;
-        html += `<td>${script.isThirdParty ? '<span style="color: #e74c3c;">Yes</span>' : 'No'}</td>`;
-        html += `<td>${script.category || 'unknown'}</td>`;
+        html += `<td style="word-break: break-all; font-family: monospace; font-size: 0.85em;">${this.escapeHtml(script.url)}</td>`;
+        html += `<td>${script.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Yes</span>' : '<span style="color: #27ae60;">No</span>'}</td>`;
+        html += `<td><span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px; font-size: 0.85em;">${script.category || 'unknown'}</span></td>`;
+        html += `<td><strong>${vendor}</strong></td>`;
         html += '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
     } else {
-      html += '<p style="color: #27ae60;">✓ No scripts loaded before consent</p>';
+      html += '<p style="color: #27ae60; background: #e8f5e9; padding: 15px; border-radius: 4px;">✓ Excellent! No third-party scripts loaded before consent.</p>';
     }
 
-    // Third-Party Scripts (All)
-    html += '<h3>All Third-Party Scripts</h3>';
+    // Section 2: ALL Third-Party Scripts
+    html += '<h3 style="color: #e74c3c; margin-top: 40px;">🌐 All Third-Party Scripts (Complete List)</h3>';
+    html += '<p>Every third-party script found across the entire site:</p>';
     const thirdPartyScripts = scanResults.thirdPartyScripts;
     if (thirdPartyScripts.length > 0) {
-      html += '<table><thead><tr>';
-      html += '<th>Type</th><th>URL</th><th>Category</th><th>Vendor</th>';
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th style="width: 80px;">Type</th><th>URL</th><th style="width: 120px;">Category</th><th style="width: 150px;">Vendor</th><th style="width: 200px;">Found On</th>';
       html += '</tr></thead><tbody>';
       
       for (const script of thirdPartyScripts) {
         const vendor = this.detectVendor(script.url);
         html += '<tr>';
         html += `<td>${script.type === 'external' ? 'External' : 'Inline'}</td>`;
-        html += `<td style="word-break: break-all; max-width: 400px;">${this.escapeHtml(script.url)}</td>`;
-        html += `<td>${script.category || 'unknown'}</td>`;
-        html += `<td>${vendor}</td>`;
+        html += `<td style="word-break: break-all; font-family: monospace; font-size: 0.85em;">${this.escapeHtml(script.url)}</td>`;
+        html += `<td><span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px; font-size: 0.85em;">${script.category || 'unknown'}</span></td>`;
+        html += `<td><strong>${vendor}</strong></td>`;
+        html += `<td style="font-size: 0.8em; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(script.foundOnUrl)}</td>`;
         html += '</tr>';
       }
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
+    } else {
+      html += '<p style="color: #27ae60;">No third-party scripts found.</p>';
     }
 
+    // Section 3: ALL Scripts (First and Third Party)
+    html += '<h3 style="color: #8e44ad; margin-top: 40px;">📋 Complete Script Inventory (All Scripts)</h3>';
+    html += '<p>Every script found across all scanned pages, including first-party:</p>';
+    if (scanResults.uniqueScripts.length > 0) {
+      html += '<div class="table-container"><table>';
+      html += '<thead><tr>';
+      html += '<th style="width: 80px;">Type</th><th>URL</th><th style="width: 100px;">Party</th><th style="width: 120px;">Category</th><th style="width: 150px;">Vendor</th><th style="width: 200px;">Found On</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const script of scanResults.uniqueScripts) {
+        const vendor = this.detectVendor(script.url);
+        const rowStyle = script.isThirdParty ? 'style="background: #fff3cd;"' : '';
+        html += `<tr ${rowStyle}>`;
+        html += `<td>${script.type === 'external' ? 'External' : 'Inline'}</td>`;
+        html += `<td style="word-break: break-all; font-family: monospace; font-size: 0.85em;">${this.escapeHtml(script.url)}</td>`;
+        html += `<td>${script.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third</span>' : '<span style="color: #27ae60;">First</span>'}</td>`;
+        html += `<td><span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px; font-size: 0.85em;">${script.category || 'unknown'}</span></td>`;
+        html += `<td><strong>${vendor}</strong></td>`;
+        html += `<td style="font-size: 0.8em; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(script.foundOnUrl)}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+
+    html += '</div>';
     return html;
   }
 

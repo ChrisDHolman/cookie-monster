@@ -1,6 +1,7 @@
 export interface CrawlConfig {
   url: string;
   maxDepth: number;
+  maxPages: number;
   headless: boolean;
   delay: number;
   outputDir: string;

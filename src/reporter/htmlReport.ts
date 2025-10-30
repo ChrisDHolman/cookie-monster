@@ -22,9 +22,14 @@ export class HtmlReporter {
     fs.writeFileSync(filepath, html, 'utf-8');
     logger.info(`HTML report generated: ${filepath}`);
 
-    // Also save JSON
+    // Also save JSON with detailed data
     const jsonPath = filepath.replace('.html', '.json');
-    fs.writeFileSync(jsonPath, JSON.stringify(results, null, 2), 'utf-8');
+    const detailedResults = {
+      ...results,
+      // Add the full scan results which contain all cookies and scripts
+      fullScanData: results
+    };
+    fs.writeFileSync(jsonPath, JSON.stringify(detailedResults, null, 2), 'utf-8');
 
     return filepath;
   }
@@ -171,6 +176,8 @@ export class HtmlReporter {
         ${this.buildScoreSection(results)}
         ${this.buildFrameworkSection(results)}
         ${this.buildStatsSection(results)}
+        ${this.buildCookieTablesSection(results)}
+        ${this.buildScriptTablesSection(results)}
         ${this.buildIssuesSection(results)}
         ${this.buildRecommendationsSection(results)}
     </div>
@@ -250,6 +257,160 @@ export class HtmlReporter {
         </div>
         ${results.details.consentVendor ? `<p><strong>Consent Vendor:</strong> ${results.details.consentVendor}</p>` : ''}
     `;
+  }
+
+  private buildCookieTablesSection(results: ComplianceResults): string {
+    if (!results.rawData) return '';
+
+    const consentResults = results.rawData.consentResults;
+    const scanResults = results.rawData.scanResults;
+
+    let html = '<h2>Cookie Analysis</h2>';
+
+    // Cookies Before Consent
+    html += '<h3>Cookies Before Consent</h3>';
+    if (consentResults.beforeConsent.cookies.length > 0) {
+      html += '<table><thead><tr>';
+      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const cookie of consentResults.beforeConsent.cookies) {
+        const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
+        html += '<tr>';
+        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.path)}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${expiryDate}</td>`;
+        html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    } else {
+      html += '<p style="color: #27ae60;">✓ No cookies set before consent</p>';
+    }
+
+    // Cookies After Accept All
+    html += '<h3>Cookies After Accept All</h3>';
+    if (consentResults.afterAcceptAll.cookies.length > 0) {
+      html += '<table><thead><tr>';
+      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const cookie of consentResults.afterAcceptAll.cookies) {
+        const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
+        html += '<tr>';
+        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.path)}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${expiryDate}</td>`;
+        html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+
+    // All Unique Cookies
+    html += '<h3>All Unique Cookies Found</h3>';
+    if (scanResults.uniqueCookies.length > 0) {
+      html += '<table><thead><tr>';
+      html += '<th>Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const cookie of scanResults.uniqueCookies) {
+        const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
+        html += '<tr>';
+        html += `<td>${this.escapeHtml(cookie.name)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
+        html += `<td>${this.escapeHtml(cookie.path)}</td>`;
+        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c;">Third-Party</span>' : 'First-Party'}</td>`;
+        html += `<td>${expiryDate}</td>`;
+        html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
+        html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+
+    return html;
+  }
+
+  private buildScriptTablesSection(results: ComplianceResults): string {
+    if (!results.rawData) return '';
+
+    const consentResults = results.rawData.consentResults;
+    const scanResults = results.rawData.scanResults;
+
+    let html = '<h2>Script Analysis</h2>';
+
+    // Scripts Before Consent
+    html += '<h3>Scripts Before Consent</h3>';
+    if (consentResults.beforeConsent.scripts.length > 0) {
+      html += '<table><thead><tr>';
+      html += '<th>Type</th><th>URL/Source</th><th>Third-Party</th><th>Category</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const script of consentResults.beforeConsent.scripts) {
+        html += '<tr>';
+        html += `<td>${script.type === 'external' ? 'External' : 'Inline'}</td>`;
+        html += `<td style="word-break: break-all; max-width: 400px;">${this.escapeHtml(script.url)}</td>`;
+        html += `<td>${script.isThirdParty ? '<span style="color: #e74c3c;">Yes</span>' : 'No'}</td>`;
+        html += `<td>${script.category || 'unknown'}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    } else {
+      html += '<p style="color: #27ae60;">✓ No scripts loaded before consent</p>';
+    }
+
+    // Third-Party Scripts (All)
+    html += '<h3>All Third-Party Scripts</h3>';
+    const thirdPartyScripts = scanResults.thirdPartyScripts;
+    if (thirdPartyScripts.length > 0) {
+      html += '<table><thead><tr>';
+      html += '<th>Type</th><th>URL</th><th>Category</th><th>Vendor</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (const script of thirdPartyScripts) {
+        const vendor = this.detectVendor(script.url);
+        html += '<tr>';
+        html += `<td>${script.type === 'external' ? 'External' : 'Inline'}</td>`;
+        html += `<td style="word-break: break-all; max-width: 400px;">${this.escapeHtml(script.url)}</td>`;
+        html += `<td>${script.category || 'unknown'}</td>`;
+        html += `<td>${vendor}</td>`;
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+
+    return html;
+  }
+
+  private detectVendor(url: string): string {
+    const urlLower = url.toLowerCase();
+    
+    if (urlLower.includes('google-analytics') || urlLower.includes('googletagmanager')) return 'Google Analytics';
+    if (urlLower.includes('facebook')) return 'Facebook';
+    if (urlLower.includes('doubleclick')) return 'Google Ads';
+    if (urlLower.includes('hubspot')) return 'HubSpot';
+    if (urlLower.includes('linkedin')) return 'LinkedIn';
+    if (urlLower.includes('twitter')) return 'Twitter';
+    if (urlLower.includes('youtube')) return 'YouTube';
+    if (urlLower.includes('vimeo')) return 'Vimeo';
+    if (urlLower.includes('hotjar')) return 'Hotjar';
+    if (urlLower.includes('cookiebot')) return 'Cookiebot';
+    if (urlLower.includes('onetrust')) return 'OneTrust';
+    
+    // Try to extract domain as vendor
+    try {
+      const domain = new URL(url).hostname;
+      return domain.replace('www.', '');
+    } catch {
+      return 'Unknown';
+    }
   }
 
   private buildIssuesSection(results: ComplianceResults): string {

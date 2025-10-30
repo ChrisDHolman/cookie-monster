@@ -12,7 +12,6 @@ export class Crawler {
   private pages: PageInfo[] = [];
   private errors: CrawlError[] = [];
   private spinner = ora();
-  private readonly MAX_PAGES = 100; // Limit to prevent infinite crawling
 
   constructor(config: CrawlConfig) {
     this.config = config;
@@ -28,7 +27,7 @@ export class Crawler {
       
       this.spinner.start('Crawling pages...');
       
-      while (!this.urlQueue.isEmpty()) {
+      while (!this.urlQueue.isEmpty() && this.pages.length < this.MAX_PAGES) {
         const item = this.urlQueue.dequeue();
         if (!item) break;
 
@@ -41,13 +40,17 @@ export class Crawler {
         await this.crawlPage(item.url, item.depth);
         
         // Update spinner
-        this.spinner.text = `Crawling... (${this.pages.length} pages found, ${this.urlQueue.size()} in queue)`;
+        this.spinner.text = `Crawling... (${this.pages.length}/${this.MAX_PAGES} pages found, ${this.urlQueue.size()} in queue)`;
         
         // Polite delay between requests
         await this.delay(this.config.delay);
       }
       
-      this.spinner.succeed(`Crawl complete: ${this.pages.length} pages found`);
+      if (this.pages.length >= this.MAX_PAGES) {
+        this.spinner.warn(`Reached maximum page limit (${this.MAX_PAGES})`);
+      } else {
+        this.spinner.succeed(`Crawl complete: ${this.pages.length} pages found`);
+      }
       
       return this.pages;
       

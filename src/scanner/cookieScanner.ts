@@ -14,6 +14,8 @@ export class CookieScanner {
   async scanPages(pages: PageInfo[]): Promise<AggregatedScanResults> {
     const spinner = ora('Scanning pages...').start();
     const scanResults: ScanResult[] = [];
+    let successCount = 0;
+    let failCount = 0;
 
     try {
       await this.init();
@@ -25,12 +27,15 @@ export class CookieScanner {
         try {
           const result = await this.scanPage(page.url);
           scanResults.push(result);
+          successCount++;
         } catch (error) {
+          failCount++;
           logger.error(`Failed to scan ${page.url}:`, error);
+          // Continue with next page instead of failing
         }
       }
 
-      spinner.succeed(`Scanned ${scanResults.length} pages`);
+      spinner.succeed(`Scanned ${successCount} pages successfully (${failCount} failed)`);
 
       return this.aggregateResults(scanResults);
 
@@ -55,6 +60,9 @@ export class CookieScanner {
     const requests: Request[] = [];
 
     try {
+      // Set shorter timeout
+      page.setDefaultTimeout(20000);
+      
       // Listen to all network requests
       page.on('request', (request) => {
         const requestUrl = request.url();
@@ -68,11 +76,11 @@ export class CookieScanner {
         });
       });
 
-      // Navigate to page
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      // Navigate to page - use domcontentloaded instead of networkidle
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
 
-      // Wait a bit for dynamic content
-      await page.waitForTimeout(2000);
+      // Wait a bit for dynamic content and scripts to load
+      await page.waitForTimeout(3000);
 
       // Get cookies
       const pageCookies = await context.cookies();
@@ -92,7 +100,7 @@ export class CookieScanner {
       }
 
       // Get scripts
-      const scriptElements = await page.$$('script');
+      const scriptElements = await page.$('script');
       for (const scriptEl of scriptElements) {
         const src = await scriptEl.getAttribute('src');
         
@@ -132,8 +140,11 @@ export class CookieScanner {
         timestamp: new Date()
       };
 
+    } catch (error) {
+      logger.error(`Error scanning ${url}:`, error);
+      throw error;
     } finally {
-      await context.close();
+      await context.close().catch(() => {});
     }
   }
 

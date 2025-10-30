@@ -38,6 +38,7 @@ program
       const config = {
         url: targetUrl.href,
         maxDepth: parseInt(options.depth),
+        maxPages: parseInt(options.maxPages),
         headless: options.headless,
         delay: parseInt(options.delay),
         outputDir: options.output,

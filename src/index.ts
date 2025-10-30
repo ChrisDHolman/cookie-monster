@@ -22,6 +22,7 @@ program
   .description('Scan a website for compliance issues')
   .argument('<url>', 'URL to scan')
   .option('-d, --depth <number>', 'Maximum crawl depth', '3')
+  .option('-m, --max-pages <number>', 'Maximum pages to crawl', '100')
   .option('-o, --output <path>', 'Output directory for reports', './reports')
   .option('--no-headless', 'Run browser in headed mode (visible)')
   .option('--delay <ms>', 'Delay between requests in ms', '1000')

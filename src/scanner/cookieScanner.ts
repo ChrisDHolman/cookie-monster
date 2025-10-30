@@ -76,7 +76,7 @@ export class CookieScanner {
         });
       });
 
-      // Navigate to page - use domcontentloaded instead of networkidle
+      // Navigate to page
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
 
       // Wait a bit for dynamic content and scripts to load
@@ -100,8 +100,9 @@ export class CookieScanner {
       }
 
       // Get scripts
-      const scriptElements = await page.$('script');
-      for (const scriptEl of scriptElements) {
+      const scriptElements = await page.$$('script');
+      for (let i = 0; i < scriptElements.length; i++) {
+        const scriptEl = scriptElements[i];
         const src = await scriptEl.getAttribute('src');
         
         if (src) {

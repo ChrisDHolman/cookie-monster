@@ -107,11 +107,25 @@ export class UrlQueue {
       '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico',
       '.pdf', '.zip', '.tar', '.gz', '.mp4', '.mp3', '.avi',
       '.css', '.js', '.woff', '.woff2', '.ttf', '.eot',
-      '.xml', '.txt', '.json'
+      '.xml', '.txt', '.json', '.rss', '.feed'
     ];
     
     const urlLower = url.toLowerCase();
-    return resourceExtensions.some(ext => urlLower.endsWith(ext));
+    
+    // Skip resource files
+    if (resourceExtensions.some(ext => urlLower.endsWith(ext))) {
+      return true;
+    }
+    
+    // Skip common non-page patterns
+    const skipPatterns = [
+      '/feed/', '/rss/', '/wp-json/', '/api/',
+      '?replytocom=', '?share=', '?print=',
+      '/tag/', '/author/', '/category/',
+      '/page/', '/?p=', '/?page_id='
+    ];
+    
+    return skipPatterns.some(pattern => urlLower.includes(pattern));
   }
 
   /**

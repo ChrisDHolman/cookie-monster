@@ -27,7 +27,7 @@ export class Crawler {
       
       this.spinner.start('Crawling pages...');
       
-      while (!this.urlQueue.isEmpty() && this.pages.length < this.MAX_PAGES) {
+      while (!this.urlQueue.isEmpty() && this.pages.length < this.config.maxPages) {
         const item = this.urlQueue.dequeue();
         if (!item) break;
 
@@ -40,14 +40,14 @@ export class Crawler {
         await this.crawlPage(item.url, item.depth);
         
         // Update spinner
-        this.spinner.text = `Crawling... (${this.pages.length}/${this.MAX_PAGES} pages found, ${this.urlQueue.size()} in queue)`;
+        this.spinner.text = `Crawling... (${this.pages.length}/${this.config.maxPages} pages found, ${this.urlQueue.size()} in queue)`;
         
         // Polite delay between requests
         await this.delay(this.config.delay);
       }
       
-      if (this.pages.length >= this.MAX_PAGES) {
-        this.spinner.warn(`Reached maximum page limit (${this.MAX_PAGES})`);
+      if (this.pages.length >= this.config.maxPages) {
+        this.spinner.warn(`Reached maximum page limit (${this.config.maxPages})`);
       } else {
         this.spinner.succeed(`Crawl complete: ${this.pages.length} pages found`);
       }

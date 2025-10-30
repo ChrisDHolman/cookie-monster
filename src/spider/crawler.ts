@@ -12,6 +12,7 @@ export class Crawler {
   private pages: PageInfo[] = [];
   private errors: CrawlError[] = [];
   private spinner = ora();
+  private readonly MAX_PAGES = 100; // Limit to prevent infinite crawling
 
   constructor(config: CrawlConfig) {
     this.config = config;

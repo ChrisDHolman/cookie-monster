@@ -61,6 +61,9 @@ export class ConsentTester {
     const requests: Request[] = [];
 
     try {
+      // Set shorter timeout
+      page.setDefaultTimeout(20000);
+      
       // Track requests
       page.on('request', (request) => {
         requests.push({
@@ -149,7 +152,7 @@ export class ConsentTester {
       });
 
       // Navigate
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
       
       // Wait for consent dialog
       await page.waitForTimeout(3000);

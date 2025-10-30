@@ -34,6 +34,10 @@ export interface ComplianceResults {
     consentMechanismFound: boolean;
     consentVendor?: string;
   };
+  rawData?: {
+    scanResults: any;
+    consentResults: any;
+  };
 }
 
 export interface FrameworkRule {

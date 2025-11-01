@@ -72,12 +72,21 @@ program
       const complianceResults = complianceChecker.analyze(scanResults, consentResults);
       console.log(chalk.green(`✓ Compliance analysis complete\n`));
       
-      // Phase 5: Generate reports
+      // Phase 5: Generate AI summary (if enabled)
+      let aiSummary = null;
+      if (options.aiSummary) {
+        console.log(chalk.cyan('🤖 Generating AI-powered summary...'));
+        const summarizer = new AISummarizer();
+        aiSummary = await summarizer.generateSummary(complianceResults);
+        console.log(chalk.green(`✓ AI summary generated\n`));
+      }
+      
+      // Phase 6: Generate reports
       const terminalReporter = new TerminalReporter();
-      terminalReporter.display(complianceResults);
+      terminalReporter.display(complianceResults, aiSummary);
       
       const htmlReporter = new HtmlReporter(config.outputDir);
-      const reportPath = await htmlReporter.generate(complianceResults, targetUrl.href);
+      const reportPath = await htmlReporter.generate(complianceResults, targetUrl.href, aiSummary);
       
       console.log(chalk.blue(`\n📊 Full report saved to: ${reportPath}\n`));
       

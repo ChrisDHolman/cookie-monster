@@ -60,73 +60,147 @@ export class AISummarizer {
       .slice(0, 10)
       .map(([vendor, count]) => `${vendor} (${count} cookies)`);
 
-    return `You are a privacy compliance expert analyzing a website's cookie and tracking compliance scan. Provide a professional, actionable executive summary.
+    // Get cookies loaded before consent with details
+    const cookiesBeforeConsent = consentResults?.beforeConsent.cookies.map((c: any) => {
+      const analysis = cookieAnalysis.find((a: any) => a.cookie.name === c.name);
+      return {
+        name: c.name,
+        vendor: analysis?.actualVendor || c.domain,
+        purpose: analysis?.purpose || 'Unknown',
+        risk: analysis?.riskLevel || 'unknown',
+        isThirdParty: analysis?.isActuallyThirdParty || c.isThirdParty
+      };
+    }) || [];
 
-SCAN RESULTS FOR: ${results.url}
-Scan Date: ${results.timestamp.toLocaleString()}
+    const highRiskBeforeConsent = cookiesBeforeConsent.filter((c: any) => 
+      c.risk === 'critical' || c.risk === 'high'
+    );
 
-COMPLIANCE SCORES:
-- Overall Score: ${results.overallScore}/100
+    // Get scripts loaded before consent
+    const scriptsBeforeConsent = consentResults?.beforeConsent.scripts
+      .filter((s: any) => s.isThirdParty)
+      .map((s: any) => s.url) || [];
+
+    return `You are a privacy and compliance expert conducting a detailed risk assessment. Analyze this website's tracking and cookie implementation with specific focus on compliance violations and privacy risks.
+
+WEBSITE: ${results.url}
+SCAN DATE: ${results.timestamp.toLocaleString()}
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPLIANCE SCORES & FRAMEWORK ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+Overall Score: ${results.overallScore}/100
 - GDPR: ${results.frameworkScores.gdpr}/100
-- CCPA: ${results.frameworkScores.ccpa}/100
+- CCPA: ${results.frameworkScores.ccpa}/100  
 - ePrivacy: ${results.frameworkScores.eprivacy}/100
 
-COOKIE ANALYSIS:
-- Total Unique Cookies: ${results.rawData?.scanResults.uniqueCookies.length || 0}
-- Third-Party Cookies: ${results.rawData?.scanResults.thirdPartyCookies.length || 0}
-- Cookies Before Consent: ${results.details.cookiesBeforeConsent}
-- Cookies After Accept: ${consentResults?.afterAcceptAll.cookies.length || 0}
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL PRE-CONSENT VIOLATIONS
+═══════════════════════════════════════════════════════════════════════════════
+Cookies Set BEFORE User Consent: ${results.details.cookiesBeforeConsent}
+Scripts Loading BEFORE Consent: ${results.details.scriptsBeforeConsent}
 
-COOKIE RISK BREAKDOWN:
-- Critical Risk: ${riskCounts.critical}
-- High Risk: ${riskCounts.high}
-- Medium Risk: ${riskCounts.medium}
-- Low Risk: ${riskCounts.low}
+HIGH-RISK COOKIES LOADING BEFORE CONSENT:
+${highRiskBeforeConsent.length > 0 ? highRiskBeforeConsent.map((c: any) => 
+  `- ${c.name} (${c.vendor}) - ${c.purpose} - Risk: ${c.risk.toUpperCase()}`
+).join('\n') : 'None identified'}
 
-TOP THIRD-PARTY VENDORS:
+TRACKING SCRIPTS LOADING BEFORE CONSENT:
+${scriptsBeforeConsent.length > 0 ? scriptsBeforeConsent.slice(0, 10).map(s => `- ${s}`).join('\n') : 'None'}
+
+═══════════════════════════════════════════════════════════════════════════════
+COOKIE RISK ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+Total Unique Cookies: ${results.rawData?.scanResults.uniqueCookies.length || 0}
+Third-Party Cookies: ${results.rawData?.scanResults.thirdPartyCookies.length || 0}
+
+Risk Distribution:
+- Critical Risk: ${riskCounts.critical} cookies
+- High Risk: ${riskCounts.high} cookies
+- Medium Risk: ${riskCounts.medium} cookies
+- Low Risk: ${riskCounts.low} cookies
+
+═══════════════════════════════════════════════════════════════════════════════
+THIRD-PARTY VENDOR ECOSYSTEM
+═══════════════════════════════════════════════════════════════════════════════
 ${topVendors.join('\n')}
 
-TRACKING SCRIPTS:
-- Total Scripts: ${results.details.totalScripts}
-- Third-Party Scripts: ${results.details.thirdPartyScripts}
-- Scripts Before Consent: ${results.details.scriptsBeforeConsent}
+═══════════════════════════════════════════════════════════════════════════════
+CONSENT MECHANISM ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+Consent UI Present: ${results.details.consentMechanismFound ? 'Yes' : 'No'}
+Consent Vendor: ${results.details.consentVendor || 'Unknown'}
+Cookies After Accept: ${consentResults?.afterAcceptAll.cookies.length || 0}
+Cookies After Reject: ${consentResults?.afterRejectAll.cookies.length || 0}
 
-CONSENT MECHANISM:
-- Found: ${results.details.consentMechanismFound ? 'Yes' : 'No'}
-- Vendor: ${results.details.consentVendor || 'Unknown'}
-
-COMPLIANCE ISSUES:
-- Total Issues: ${results.summary.totalIssues}
+═══════════════════════════════════════════════════════════════════════════════
+IDENTIFIED COMPLIANCE VIOLATIONS
+═══════════════════════════════════════════════════════════════════════════════
+Total Issues: ${results.summary.totalIssues}
 - Critical: ${results.summary.criticalIssues}
 - Warnings: ${results.summary.warningIssues}
 - Info: ${results.summary.infoIssues}
 
-TOP ISSUES:
-${results.issues.slice(0, 5).map(i => `- [${i.severity.toUpperCase()}] ${i.title}`).join('\n')}
+TOP VIOLATIONS:
+${results.issues.slice(0, 8).map(i => `[${i.severity.toUpperCase()}] ${i.title} (${i.framework.toUpperCase()})`).join('\n')}
 
-Please provide a response in this EXACT JSON format (no markdown, just raw JSON):
+═══════════════════════════════════════════════════════════════════════════════
+ANALYSIS REQUIREMENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Provide a DETAILED, SPECIFIC analysis covering:
+
+1. **Executive Summary**: 
+   - What are the 2-3 MOST CRITICAL privacy/compliance problems?
+   - What is the actual legal/financial risk exposure?
+   - Use specific numbers and vendor names from the data above
+
+2. **Key Findings** (5-7 bullets):
+   - Focus on SPECIFIC violations with REAL impact
+   - Name actual vendors and their purposes (e.g., "Microsoft Clarity for session recording")
+   - Quantify the problems (e.g., "15 high-risk tracking cookies load before consent")
+   - Explain WHY each finding matters for compliance
+
+3. **Critical Issues** (3-5 bullets):
+   - The MOST URGENT problems requiring immediate action
+   - Be specific about what's wrong and what law it violates
+   - Focus on pre-consent tracking and high-risk cookies
+   - Explain the enforcement/penalty risk
+
+4. **Recommendations** (5-7 bullets):
+   - ACTIONABLE, SPECIFIC steps (not generic advice)
+   - Prioritized by impact and urgency
+   - Include technical implementation suggestions
+   - Address the specific vendors and cookies identified above
+
+5. **Compliance Outlook**:
+   - Clear verdict: compliant, non-compliant, or partially compliant
+   - Specific legal risks under GDPR (€20M/4% revenue), CCPA ($7,500 per violation)
+   - Timeline for remediation
+
+CRITICAL INSTRUCTIONS:
+- Do NOT repeat generic compliance advice
+- Do NOT just restate the numbers - ANALYZE what they mean
+- DO name specific vendors and explain their risks
+- DO explain the actual privacy implications
+- DO prioritize based on legal/financial risk
+- Use the actual data provided - reference specific cookies, vendors, and violations
+- Be direct about violations - this is a technical compliance report
+
+Return ONLY valid JSON (no markdown, no code fences):
 {
-  "executiveSummary": "2-3 sentence high-level summary of the site's compliance posture",
+  "executiveSummary": "2-3 sentences with SPECIFIC issues and risks from THIS scan",
   "keyFindings": [
-    "3-5 bullet points of the most important discoveries"
+    "5-7 specific, data-driven findings with actual vendor names and numbers"
   ],
   "criticalIssues": [
-    "List the most critical compliance problems that need immediate attention"
+    "3-5 urgent problems with specific legal/technical details"
   ],
   "recommendations": [
-    "3-5 specific, actionable recommendations prioritized by impact"
+    "5-7 actionable steps with technical specifics, prioritized by impact"
   ],
-  "complianceOutlook": "1-2 sentences on whether this site is compliant and what the main risks are"
-}
-
-Focus on:
-1. Privacy law violations (GDPR, CCPA, ePrivacy)
-2. High-risk tracking before consent
-3. Vendor transparency issues
-4. Security concerns
-5. User consent effectiveness
-
-Be direct, professional, and actionable. Use business language suitable for executives.`;
+  "complianceOutlook": "2-3 sentences on legal risk, compliance status, and urgency"
+}`;
   }
 
   /**

@@ -8,6 +8,7 @@ import { ConsentTester } from './scanner/consentTester';
 import { ComplianceChecker } from './compliance/rules';
 import { TerminalReporter } from './reporter/terminal';
 import { HtmlReporter } from './reporter/htmlReport';
+import { AISummarizer } from './reporter/aiSummarizer';
 import { logger } from './utils/logger';
 
 const program = new Command();

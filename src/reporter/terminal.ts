@@ -11,6 +11,11 @@ export class TerminalReporter {
     console.log(chalk.bold.blue('  COMPLIANCE SCAN RESULTS'));
     console.log('='.repeat(80) + '\n');
 
+    // AI Summary (if available)
+    if (aiSummary) {
+      this.displayAISummary(aiSummary);
+    }
+
     // Overall Score
     this.displayOverallScore(results);
 
@@ -27,6 +32,38 @@ export class TerminalReporter {
     this.displayPositiveFindings(results);
 
     console.log('\n' + '='.repeat(80) + '\n');
+  }
+
+  /**
+   * Display AI-generated summary
+   */
+  private displayAISummary(aiSummary: any): void {
+    console.log(chalk.bold.cyan('🤖 AI-POWERED EXECUTIVE SUMMARY\n'));
+    console.log(chalk.white(aiSummary.executiveSummary));
+    console.log();
+    
+    if (aiSummary.complianceOutlook) {
+      console.log(chalk.bold('Compliance Outlook: ') + chalk.yellow(aiSummary.complianceOutlook));
+      console.log();
+    }
+    
+    if (aiSummary.keyFindings && aiSummary.keyFindings.length > 0) {
+      console.log(chalk.bold('Key Findings:'));
+      for (const finding of aiSummary.keyFindings) {
+        console.log(chalk.blue('  • ') + finding);
+      }
+      console.log();
+    }
+    
+    if (aiSummary.recommendations && aiSummary.recommendations.length > 0) {
+      console.log(chalk.bold('Top Recommendations:'));
+      for (const rec of aiSummary.recommendations.slice(0, 3)) {
+        console.log(chalk.green('  ✓ ') + rec);
+      }
+      console.log();
+    }
+    
+    console.log('─'.repeat(80) + '\n');
   }
 
   /**
@@ -91,10 +128,10 @@ export class TerminalReporter {
     console.log(chalk.bold('📊 Summary Statistics:\n'));
 
     const stats = [
-      { label: 'Total Cookies', value: results.details.totalCookies, highlight: false },
+      { label: 'Unique Cookies', value: results.details.totalCookies, highlight: false },
       { label: 'Third-Party Cookies', value: results.details.thirdPartyCookies, highlight: results.details.thirdPartyCookies > 5 },
       { label: 'Cookies Before Consent', value: results.details.cookiesBeforeConsent, highlight: results.details.cookiesBeforeConsent > 2 },
-      { label: 'Total Scripts', value: results.details.totalScripts, highlight: false },
+      { label: 'Unique Scripts', value: results.details.totalScripts, highlight: false },
       { label: 'Third-Party Scripts', value: results.details.thirdPartyScripts, highlight: results.details.thirdPartyScripts > 5 },
       { label: 'Scripts Before Consent', value: results.details.scriptsBeforeConsent, highlight: results.details.scriptsBeforeConsent > 0 }
     ];

@@ -6,7 +6,7 @@ export class TerminalReporter {
   /**
    * Display compliance results in terminal
    */
-  display(results: ComplianceResults): void {
+  display(results: ComplianceResults, aiSummary?: any): void {
     console.log('\n' + '='.repeat(80));
     console.log(chalk.bold.blue('  COMPLIANCE SCAN RESULTS'));
     console.log('='.repeat(80) + '\n');

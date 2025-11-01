@@ -278,6 +278,13 @@ export class CookieScanner {
     // Deduplicate scripts by URL
     const uniqueScripts = this.deduplicateScripts(allScripts);
 
+    // Analyze all unique cookies
+    const cookieAnalysis = this.cookieAnalyzer.analyzeCookies(uniqueCookies);
+    
+    logger.info(`Analyzed ${cookieAnalysis.length} cookies`);
+    const actualThirdParty = cookieAnalysis.filter(a => a.isActuallyThirdParty).length;
+    logger.info(`Found ${actualThirdParty} actual third-party cookies`);
+
     return {
       totalCookies: allCookies.length,
       totalScripts: allScripts.length,
@@ -286,38 +293,66 @@ export class CookieScanner {
       uniqueScripts,
       thirdPartyCookies: uniqueCookies.filter(c => c.isThirdParty),
       thirdPartyScripts: uniqueScripts.filter(s => s.isThirdParty),
-      scanResults
+      scanResults,
+      cookieAnalysis
     };
   }
 
   /**
-   * Deduplicate cookies
+   * Deduplicate cookies by name and domain (normalize minor differences)
    */
   private deduplicateCookies(cookies: Cookie[]): Cookie[] {
     const seen = new Map<string, Cookie>();
     
     for (const cookie of cookies) {
-      const key = `${cookie.name}-${cookie.domain}`;
+      // Create a normalized key that ignores minor variations
+      const normalizedDomain = cookie.domain.toLowerCase().replace(/^\./, '');
+      const normalizedName = cookie.name.toLowerCase().trim();
+      const key = `${normalizedName}@${normalizedDomain}`;
+      
       if (!seen.has(key)) {
         seen.set(key, cookie);
       }
     }
     
+    logger.info(`Deduplicated ${cookies.length} cookies to ${seen.size} unique cookies`);
     return Array.from(seen.values());
   }
 
   /**
-   * Deduplicate scripts
+   * Deduplicate scripts by URL (normalize query params)
    */
   private deduplicateScripts(scripts: Script[]): Script[] {
     const seen = new Map<string, Script>();
     
     for (const script of scripts) {
-      if (!seen.has(script.url)) {
-        seen.set(script.url, script);
+      // Normalize the URL (remove query params for external scripts, keep base URL)
+      let normalizedUrl = script.url;
+      
+      if (script.type === 'external') {
+        try {
+          const url = new URL(script.url);
+          // Keep domain and path, remove most query params except version indicators
+          const keepParams = ['v', 'ver', 'version'];
+          const params = new URLSearchParams();
+          url.searchParams.forEach((value, key) => {
+            if (keepParams.includes(key.toLowerCase())) {
+              params.set(key, value);
+            }
+          });
+          url.search = params.toString();
+          normalizedUrl = url.href;
+        } catch {
+          // If URL parsing fails, use original
+        }
+      }
+      
+      if (!seen.has(normalizedUrl)) {
+        seen.set(normalizedUrl, script);
       }
     }
     
+    logger.info(`Deduplicated ${scripts.length} scripts to ${seen.size} unique scripts`);
     return Array.from(seen.values());
   }
 }

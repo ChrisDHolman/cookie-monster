@@ -358,31 +358,65 @@ export class HtmlReporter {
       html += '</tbody></table></div>';
     }
 
-    // Section 3: ALL Unique Cookies Found
-    html += '<h3 style="color: #8e44ad; margin-top: 40px;">📋 Complete Cookie Inventory (All Pages)</h3>';
-    html += '<p>Every unique cookie found across all scanned pages:</p>';
-    if (scanResults.uniqueCookies.length > 0) {
+    // Section 3: ALL Unique Cookies Found with Risk Analysis
+    html += '<h3 style="color: #8e44ad; margin-top: 40px;">📋 Complete Cookie Inventory with Risk Analysis</h3>';
+    html += '<p>Every unique cookie found across all scanned pages with detailed risk assessment:</p>';
+    
+    const cookieAnalysis = scanResults.cookieAnalysis || [];
+    if (cookieAnalysis.length > 0) {
       html += '<div class="table-container"><table>';
       html += '<thead><tr>';
-      html += '<th>Cookie Name</th><th>Domain</th><th>Path</th><th>Type</th><th>Expires</th><th>Secure</th><th>HttpOnly</th><th>SameSite</th><th>Found On</th>';
+      html += '<th>Cookie Name</th><th>Actual Vendor</th><th>Domain</th><th>Type</th><th>Risk</th><th>Category</th><th>Purpose</th><th>Expires</th><th>Security</th>';
       html += '</tr></thead><tbody>';
       
-      for (const cookie of scanResults.uniqueCookies) {
+      for (const analysis of cookieAnalysis) {
+        const cookie = analysis.cookie;
         const expiryDate = cookie.expires ? new Date(cookie.expires * 1000).toLocaleDateString() : 'Session';
-        const rowStyle = cookie.isThirdParty ? 'style="background: #fff3cd;"' : '';
+        
+        // Risk color coding
+        let riskColor = '#27ae60';
+        let riskBg = '#e8f5e9';
+        if (analysis.riskLevel === 'critical') { riskColor = '#c0392b'; riskBg = '#ffebee'; }
+        else if (analysis.riskLevel === 'high') { riskColor = '#e74c3c'; riskBg = '#ffe6e6'; }
+        else if (analysis.riskLevel === 'medium') { riskColor = '#f39c12'; riskBg = '#fff3cd'; }
+        
+        const rowStyle = `style="background: ${riskBg};"`;
+        
         html += `<tr ${rowStyle}>`;
         html += `<td><strong>${this.escapeHtml(cookie.name)}</strong></td>`;
-        html += `<td>${this.escapeHtml(cookie.domain)}</td>`;
-        html += `<td>${this.escapeHtml(cookie.path)}</td>`;
-        html += `<td>${cookie.isThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third-Party</span>' : '<span style="color: #27ae60;">First-Party</span>'}</td>`;
+        html += `<td><strong>${this.escapeHtml(analysis.actualVendor)}</strong></td>`;
+        html += `<td style="font-size: 0.85em;">${this.escapeHtml(cookie.domain)}</td>`;
+        html += `<td>${analysis.isActuallyThirdParty ? '<span style="color: #e74c3c; font-weight: bold;">Third-Party</span>' : '<span style="color: #27ae60;">First-Party</span>'}</td>`;
+        html += `<td><span style="background: ${riskColor}; color: white; padding: 3px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em;">${analysis.riskLevel.toUpperCase()}</span>`;
+        if (analysis.riskReasons.length > 0) {
+          html += `<br><span style="font-size: 0.75em; color: #666;">${analysis.riskReasons.join(', ')}</span>`;
+        }
+        html += `</td>`;
+        html += `<td><span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px; font-size: 0.85em;">${analysis.category}</span></td>`;
+        html += `<td style="font-size: 0.85em;">${this.escapeHtml(analysis.purpose)}</td>`;
         html += `<td>${expiryDate}</td>`;
-        html += `<td>${cookie.secure ? '✓' : '✗'}</td>`;
-        html += `<td>${cookie.httpOnly ? '✓' : '✗'}</td>`;
-        html += `<td>${cookie.sameSite || 'None'}</td>`;
-        html += `<td style="font-size: 0.8em; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(cookie.foundOnUrl)}</td>`;
+        html += `<td style="font-size: 0.85em;">`;
+        html += cookie.secure ? '🔒 ' : '';
+        html += cookie.httpOnly ? '🛡️ ' : '';
+        html += `<br><span style="font-size: 0.75em;">${cookie.sameSite || 'None'}</span>`;
+        html += `</td>`;
         html += '</tr>';
       }
       html += '</tbody></table></div>';
+      
+      // Risk Summary
+      const criticalCount = cookieAnalysis.filter((a: any) => a.riskLevel === 'critical').length;
+      const highCount = cookieAnalysis.filter((a: any) => a.riskLevel === 'high').length;
+      const mediumCount = cookieAnalysis.filter((a: any) => a.riskLevel === 'medium').length;
+      const lowCount = cookieAnalysis.filter((a: any) => a.riskLevel === 'low').length;
+      
+      html += '<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">';
+      html += '<strong>Risk Summary:</strong> ';
+      if (criticalCount > 0) html += `<span style="color: #c0392b; font-weight: bold;">${criticalCount} Critical</span> | `;
+      if (highCount > 0) html += `<span style="color: #e74c3c; font-weight: bold;">${highCount} High</span> | `;
+      if (mediumCount > 0) html += `<span style="color: #f39c12; font-weight: bold;">${mediumCount} Medium</span> | `;
+      html += `<span style="color: #27ae60;">${lowCount} Low</span>`;
+      html += '</div>';
     }
 
     html += '</div>';

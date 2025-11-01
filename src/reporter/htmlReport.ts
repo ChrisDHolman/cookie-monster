@@ -405,6 +405,9 @@ export class HtmlReporter {
     html += '<p>Every unique cookie found across all scanned pages with detailed risk assessment:</p>';
     
     const cookieAnalysis = scanResults.cookieAnalysis || [];
+    
+    logger.info(`Cookie analysis in HTML report: ${cookieAnalysis.length} cookies`);
+    
     if (cookieAnalysis.length > 0) {
       html += '<div class="table-container"><table>';
       html += '<thead><tr>';
@@ -458,6 +461,11 @@ export class HtmlReporter {
       if (highCount > 0) html += `<span style="color: #e74c3c; font-weight: bold;">${highCount} High</span> | `;
       if (mediumCount > 0) html += `<span style="color: #f39c12; font-weight: bold;">${mediumCount} Medium</span> | `;
       html += `<span style="color: #27ae60;">${lowCount} Low</span>`;
+      html += '</div>';
+    } else {
+      html += '<div style="background: #fff3cd; padding: 20px; border-radius: 4px; margin: 20px 0;">';
+      html += '<p><strong>⚠️ Cookie analysis data not available.</strong></p>';
+      html += '<p>The cookie risk analysis requires the cookieAnalysis data. This may indicate the analyzer did not run properly.</p>';
       html += '</div>';
     }
 

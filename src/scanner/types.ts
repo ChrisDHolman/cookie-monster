@@ -53,6 +53,7 @@ export interface AggregatedScanResults {
   thirdPartyCookies: Cookie[];
   thirdPartyScripts: Script[];
   scanResults: ScanResult[];
+  cookieAnalysis?: any[]; // Will be populated by analyzer
 }
 
 export interface ConsentTestResult {

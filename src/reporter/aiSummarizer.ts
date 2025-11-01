@@ -15,14 +15,21 @@ export class AISummarizer {
    */
   async generateSummary(results: ComplianceResults): Promise<AISummary> {
     try {
-      logger.info('Generating AI summary...');
+      logger.info('Starting AI summary generation...');
 
       const prompt = this.buildPrompt(results);
-      const response = await this.callClaudeAPI(prompt);
+      logger.info('Prompt built, calling Claude API...');
       
-      return this.parseResponse(response);
+      const response = await this.callClaudeAPI(prompt);
+      logger.info('API response received, parsing...');
+      
+      const parsed = this.parseResponse(response);
+      logger.info('AI summary generated successfully');
+      
+      return parsed;
     } catch (error) {
       logger.error('Failed to generate AI summary:', error);
+      logger.error('Error details:', error instanceof Error ? error.message : String(error));
       return this.getFallbackSummary(results);
     }
   }
@@ -185,6 +192,8 @@ Be direct, professional, and actionable. Use business language suitable for exec
    * Fallback summary if AI fails
    */
   private getFallbackSummary(results: ComplianceResults): AISummary {
+    logger.info('Using fallback summary');
+    
     const score = results.overallScore;
     let outlook = 'Good';
     if (score < 60) outlook = 'Poor';

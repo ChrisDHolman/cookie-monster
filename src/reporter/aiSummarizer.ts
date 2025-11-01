@@ -111,8 +111,11 @@ ${scriptsBeforeConsent.length > 0 ? scriptsBeforeConsent.slice(0, 10).map((s: an
 ═══════════════════════════════════════════════════════════════════════════════
 COOKIE RISK ANALYSIS
 ═══════════════════════════════════════════════════════════════════════════════
-Total Unique Cookies: ${results.rawData?.scanResults.uniqueCookies.length || 0}
+Total Unique Cookies Found: ${results.rawData?.scanResults.uniqueCookies.length || 0}
 Third-Party Cookies: ${results.rawData?.scanResults.thirdPartyCookies.length || 0}
+First-Party Cookies: ${(results.rawData?.scanResults.uniqueCookies.length || 0) - (results.rawData?.scanResults.thirdPartyCookies.length || 0)}
+
+Note: ${results.rawData?.scanResults.totalCookies || 0} total cookie instances across all pages (includes duplicates)
 
 Risk Distribution:
 - Critical Risk: ${riskCounts.critical} cookies

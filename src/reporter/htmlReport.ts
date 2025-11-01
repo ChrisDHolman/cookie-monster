@@ -296,7 +296,7 @@ export class HtmlReporter {
         <h2>Scan Statistics</h2>
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-label">Total Cookies</div>
+                <div class="stat-label">Unique Cookies</div>
                 <div class="stat-value">${results.details.totalCookies}</div>
             </div>
             <div class="stat-item">
@@ -308,7 +308,7 @@ export class HtmlReporter {
                 <div class="stat-value ${results.details.cookiesBeforeConsent > 2 ? 'warning' : ''}">${results.details.cookiesBeforeConsent}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">Total Scripts</div>
+                <div class="stat-label">Unique Scripts</div>
                 <div class="stat-value">${results.details.totalScripts}</div>
             </div>
             <div class="stat-item">

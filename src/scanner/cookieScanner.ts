@@ -1,12 +1,14 @@
 import { chromium, Browser, Page, BrowserContext } from 'playwright';
 import { PageInfo } from '../spider/types';
 import { Cookie, Script, Request, ScanResult, AggregatedScanResults, ScriptCategory } from './types';
+import { CookieAnalyzer } from './cookieAnalyzer';
 import { logger } from '../utils/logger';
 import ora from 'ora';
 
 export class CookieScanner {
   private browser: Browser | null = null;
   private knownTrackers = this.loadKnownTrackers();
+  private cookieAnalyzer = new CookieAnalyzer();
 
   /**
    * Scan multiple pages for cookies and scripts

@@ -59,10 +59,10 @@ export class ComplianceChecker {
       issues,
       summary,
       details: {
-        totalCookies: scan.totalCookies,
+        totalCookies: scan.uniqueCookies.length,  // Use unique count
         thirdPartyCookies: scan.thirdPartyCookies.length,
         cookiesBeforeConsent: consent.beforeConsent.cookies.length,
-        totalScripts: scan.totalScripts,
+        totalScripts: scan.uniqueScripts.length,  // Use unique count
         thirdPartyScripts: scan.thirdPartyScripts.length,
         scriptsBeforeConsent: consent.beforeConsent.scripts.length,
         consentMechanismFound: consent.consentMechanismFound,

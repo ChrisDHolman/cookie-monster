@@ -51,7 +51,7 @@ export class ComplianceChecker {
 
     logger.info(`Compliance check complete: ${summary.totalIssues} issues found`);
 
-    return {
+    const results: ComplianceResults = {
       url: consent.url,
       timestamp: new Date(),
       overallScore,
@@ -67,8 +67,16 @@ export class ComplianceChecker {
         scriptsBeforeConsent: consent.beforeConsent.scripts.length,
         consentMechanismFound: consent.consentMechanismFound,
         consentVendor: consent.consentVendor
+      },
+      rawData: {
+        scanResults: scan,
+        consentResults: consent
       }
     };
+
+    logger.info(`Added rawData with ${scan.uniqueCookies.length} cookies and ${scan.uniqueScripts.length} scripts`);
+    
+    return results;
   }
 
   /**

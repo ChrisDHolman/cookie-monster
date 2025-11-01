@@ -15,6 +15,14 @@ export class HtmlReporter {
    * Generate HTML report
    */
   async generate(results: ComplianceResults, url: string): Promise<string> {
+    // Debug logging
+    if (results.rawData) {
+      logger.info(`Generating report with ${results.rawData.scanResults.uniqueCookies.length} unique cookies`);
+      logger.info(`Third-party cookies: ${results.rawData.scanResults.thirdPartyCookies.length}`);
+      logger.info(`Unique scripts: ${results.rawData.scanResults.uniqueScripts.length}`);
+      logger.info(`Third-party scripts: ${results.rawData.scanResults.thirdPartyScripts.length}`);
+    }
+    
     const html = this.buildHtml(results);
     const filename = this.generateFilename(url);
     const filepath = path.join(this.outputDir, filename);
@@ -24,12 +32,8 @@ export class HtmlReporter {
 
     // Also save JSON with detailed data
     const jsonPath = filepath.replace('.html', '.json');
-    const detailedResults = {
-      ...results,
-      // Add the full scan results which contain all cookies and scripts
-      fullScanData: results
-    };
-    fs.writeFileSync(jsonPath, JSON.stringify(detailedResults, null, 2), 'utf-8');
+    fs.writeFileSync(jsonPath, JSON.stringify(results, null, 2), 'utf-8');
+    logger.info(`JSON report saved: ${jsonPath}`);
 
     return filepath;
   }
@@ -279,10 +283,15 @@ export class HtmlReporter {
   }
 
   private buildCookieTablesSection(results: ComplianceResults): string {
-    if (!results.rawData) return '';
+    if (!results.rawData) {
+      logger.warn('No rawData in results - cannot build cookie tables');
+      return '<div class="cookie-section"><p>⚠️ Cookie data not available</p></div>';
+    }
 
     const consentResults = results.rawData.consentResults;
     const scanResults = results.rawData.scanResults;
+
+    logger.info(`Building cookie tables: ${scanResults.uniqueCookies.length} unique cookies`);
 
     let html = '<div class="cookie-section">';
     html += '<div class="section-header">🍪 COMPLETE COOKIE INVENTORY</div>';

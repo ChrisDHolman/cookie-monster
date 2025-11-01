@@ -106,7 +106,7 @@ ${highRiskBeforeConsent.length > 0 ? highRiskBeforeConsent.map((c: any) =>
 ).join('\n') : 'None identified'}
 
 TRACKING SCRIPTS LOADING BEFORE CONSENT:
-${scriptsBeforeConsent.length > 0 ? scriptsBeforeConsent.slice(0, 10).map(s => `- ${s}`).join('\n') : 'None'}
+${scriptsBeforeConsent.length > 0 ? scriptsBeforeConsent.slice(0, 10).map((s: any) => `- ${s}`).join('\n') : 'None'}
 
 ═══════════════════════════════════════════════════════════════════════════════
 COOKIE RISK ANALYSIS

@@ -147,7 +147,7 @@ Be direct, professional, and actionable. Use business language suitable for exec
       throw new Error(`API call failed: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
     
     // Extract text from response
     const text = data.content

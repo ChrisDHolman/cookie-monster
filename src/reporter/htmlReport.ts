@@ -14,7 +14,7 @@ export class HtmlReporter {
   /**
    * Generate HTML report
    */
-  async generate(results: ComplianceResults, url: string): Promise<string> {
+  async generate(results: ComplianceResults, url: string, aiSummary?: any): Promise<string> {
     // Debug logging
     if (results.rawData) {
       logger.info(`Generating report with ${results.rawData.scanResults.uniqueCookies.length} unique cookies`);
@@ -23,7 +23,7 @@ export class HtmlReporter {
       logger.info(`Third-party scripts: ${results.rawData.scanResults.thirdPartyScripts.length}`);
     }
     
-    const html = this.buildHtml(results);
+    const html = this.buildHtml(results, aiSummary);
     const filename = this.generateFilename(url);
     const filepath = path.join(this.outputDir, filename);
 
@@ -41,7 +41,7 @@ export class HtmlReporter {
   /**
    * Build HTML content
    */
-  private buildHtml(results: ComplianceResults): string {
+  private buildHtml(results: ComplianceResults, aiSummary?: any): string {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -196,6 +196,7 @@ export class HtmlReporter {
             </div>
         </div>
 
+        ${aiSummary ? this.buildAISummarySection(aiSummary) : ''}
         ${this.buildScoreSection(results)}
         ${this.buildCookieTablesSection(results)}
         ${this.buildScriptTablesSection(results)}
@@ -206,6 +207,47 @@ export class HtmlReporter {
     </div>
 </body>
 </html>`;
+  }
+
+  private buildAISummarySection(aiSummary: any): string {
+    return `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: white; border: none; margin: 0 0 20px 0;">🤖 AI-Powered Executive Summary</h2>
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="font-size: 1.1em; line-height: 1.6; margin: 0;">${this.escapeHtml(aiSummary.executiveSummary)}</p>
+            </div>
+            
+            ${aiSummary.complianceOutlook ? `
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <strong>Compliance Outlook:</strong> ${this.escapeHtml(aiSummary.complianceOutlook)}
+            </div>
+            ` : ''}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div>
+                    <h3 style="color: white; margin-top: 0;">Key Findings</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        ${aiSummary.keyFindings.map((f: string) => `<li style="margin: 8px 0;">${this.escapeHtml(f)}</li>`).join('')}
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: white; margin-top: 0;">Priority Recommendations</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        ${aiSummary.recommendations.map((r: string) => `<li style="margin: 8px 0;">${this.escapeHtml(r)}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            ${aiSummary.criticalIssues && aiSummary.criticalIssues.length > 0 ? `
+            <div style="background: rgba(231, 76, 60, 0.3); padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #e74c3c;">
+                <strong>⚠️ Critical Issues Requiring Immediate Attention:</strong>
+                <ul style="margin: 10px 0 0 20px; padding: 0;">
+                    ${aiSummary.criticalIssues.map((i: string) => `<li style="margin: 5px 0;">${this.escapeHtml(i)}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+        </div>
+    `;
   }
 
   private buildScoreSection(results: ComplianceResults): string {

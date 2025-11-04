@@ -38,12 +38,21 @@ export class TerminalReporter {
    * Display AI-generated summary
    */
   private displayAISummary(aiSummary: any): void {
-    console.log(chalk.bold.cyan('🤖 AI-POWERED EXECUTIVE SUMMARY\n'));
+    console.log(chalk.bold.cyan('🤖 AI-POWERED COMPLIANCE ASSESSMENT\n'));
+    
+    console.log(chalk.bold.white('EXECUTIVE SUMMARY'));
     console.log(chalk.white(aiSummary.executiveSummary));
     console.log();
     
-    if (aiSummary.complianceOutlook) {
-      console.log(chalk.bold('Compliance Outlook: ') + chalk.yellow(aiSummary.complianceOutlook));
+    if (aiSummary.cookieSecurityAssessment) {
+      console.log(chalk.bold.white('COOKIE SECURITY ASSESSMENT'));
+      console.log(chalk.white(aiSummary.cookieSecurityAssessment));
+      console.log();
+    }
+    
+    if (aiSummary.preConsentViolations) {
+      console.log(chalk.bold.red('PRE-CONSENT TRACKING VIOLATIONS'));
+      console.log(chalk.white(aiSummary.preConsentViolations));
       console.log();
     }
     
@@ -55,11 +64,25 @@ export class TerminalReporter {
       console.log();
     }
     
+    if (aiSummary.criticalIssues && aiSummary.criticalIssues.length > 0) {
+      console.log(chalk.bold.red('Critical Issues Requiring Immediate Action:'));
+      for (const issue of aiSummary.criticalIssues) {
+        console.log(chalk.red('  ⚠ ') + issue);
+      }
+      console.log();
+    }
+    
     if (aiSummary.recommendations && aiSummary.recommendations.length > 0) {
-      console.log(chalk.bold('Top Recommendations:'));
-      for (const rec of aiSummary.recommendations.slice(0, 3)) {
+      console.log(chalk.bold('Priority Recommendations:'));
+      for (const rec of aiSummary.recommendations.slice(0, 5)) {
         console.log(chalk.green('  ✓ ') + rec);
       }
+      console.log();
+    }
+    
+    if (aiSummary.complianceOutlook) {
+      console.log(chalk.bold.yellow('COMPLIANCE OUTLOOK'));
+      console.log(chalk.white(aiSummary.complianceOutlook));
       console.log();
     }
     

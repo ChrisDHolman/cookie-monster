@@ -212,38 +212,55 @@ export class HtmlReporter {
   private buildAISummarySection(aiSummary: any): string {
     return `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: white; border: none; margin: 0 0 20px 0;">🤖 AI-Powered Executive Summary</h2>
-            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 4px; margin-bottom: 20px;">
-                <p style="font-size: 1.1em; line-height: 1.6; margin: 0;">${this.escapeHtml(aiSummary.executiveSummary)}</p>
+            <h2 style="color: white; border: none; margin: 0 0 20px 0;">🤖 AI-Powered Compliance Assessment</h2>
+            
+            <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+                <h3 style="color: white; margin-top: 0;">Executive Summary</h3>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0; white-space: pre-line;">${this.escapeHtml(aiSummary.executiveSummary)}</p>
             </div>
             
-            ${aiSummary.complianceOutlook ? `
-            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <strong>Compliance Outlook:</strong> ${this.escapeHtml(aiSummary.complianceOutlook)}
+            ${aiSummary.cookieSecurityAssessment ? `
+            <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+                <h3 style="color: white; margin-top: 0;">Cookie Security Assessment</h3>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0; white-space: pre-line;">${this.escapeHtml(aiSummary.cookieSecurityAssessment)}</p>
+            </div>
+            ` : ''}
+            
+            ${aiSummary.preConsentViolations ? `
+            <div style="background: rgba(231, 76, 60, 0.3); padding: 20px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #e74c3c;">
+                <h3 style="color: white; margin-top: 0;">⚠️ Pre-Consent Tracking Violations</h3>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0; white-space: pre-line;">${this.escapeHtml(aiSummary.preConsentViolations)}</p>
             </div>
             ` : ''}
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                 <div>
                     <h3 style="color: white; margin-top: 0;">Key Findings</h3>
-                    <ul style="margin: 0; padding-left: 20px;">
+                    <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
                         ${aiSummary.keyFindings.map((f: string) => `<li style="margin: 8px 0;">${this.escapeHtml(f)}</li>`).join('')}
                     </ul>
                 </div>
                 <div>
                     <h3 style="color: white; margin-top: 0;">Priority Recommendations</h3>
-                    <ul style="margin: 0; padding-left: 20px;">
+                    <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
                         ${aiSummary.recommendations.map((r: string) => `<li style="margin: 8px 0;">${this.escapeHtml(r)}</li>`).join('')}
                     </ul>
                 </div>
             </div>
             
             ${aiSummary.criticalIssues && aiSummary.criticalIssues.length > 0 ? `
-            <div style="background: rgba(231, 76, 60, 0.3); padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #e74c3c;">
-                <strong>⚠️ Critical Issues Requiring Immediate Attention:</strong>
-                <ul style="margin: 10px 0 0 20px; padding: 0;">
-                    ${aiSummary.criticalIssues.map((i: string) => `<li style="margin: 5px 0;">${this.escapeHtml(i)}</li>`).join('')}
+            <div style="background: rgba(231, 76, 60, 0.4); padding: 20px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #c0392b;">
+                <strong style="font-size: 1.1em;">⚠️ Critical Issues Requiring Immediate Action:</strong>
+                <ul style="margin: 10px 0 0 20px; padding: 0; line-height: 1.6;">
+                    ${aiSummary.criticalIssues.map((i: string) => `<li style="margin: 8px 0;">${this.escapeHtml(i)}</li>`).join('')}
                 </ul>
+            </div>
+            ` : ''}
+            
+            ${aiSummary.complianceOutlook ? `
+            <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 4px; margin-top: 20px;">
+                <h3 style="color: white; margin-top: 0;">Compliance Outlook</h3>
+                <p style="font-size: 1.05em; line-height: 1.7; margin: 0; white-space: pre-line;">${this.escapeHtml(aiSummary.complianceOutlook)}</p>
             </div>
             ` : ''}
         </div>

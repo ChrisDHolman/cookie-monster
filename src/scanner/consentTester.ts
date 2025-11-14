@@ -240,10 +240,25 @@ export class ConsentTester {
       
       // Cookiebot
       '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
-      
+
+      // Osano
+      '.osano-cm-accept-all',
+      '.osano-cm-button--type_accept',
+      'button[data-osano="accept"]',
+
+      // Termly
+      '#accept-all-button',
+      '.t-accept-all-button',
+      '.t-preference-button[data-action="accept"]',
+
+      // TrustArc
+      '#truste-consent-button',
+      '.trustarc-accept-btn',
+      '.truste-button1',
+
       // GDPR Cookie Consent
       '.gdpr-cookie-accept',
-      
+
       // Generic classes
       '.cookie-accept',
       '.accept-cookies',
@@ -264,7 +279,22 @@ export class ConsentTester {
       
       // Cookiebot
       '#CybotCookiebotDialogBodyButtonDecline',
-      
+
+      // Osano
+      '.osano-cm-deny-all',
+      '.osano-cm-button--type_deny',
+      'button[data-osano="deny"]',
+
+      // Termly
+      '#reject-all-button',
+      '.t-reject-all-button',
+      '.t-preference-button[data-action="reject"]',
+
+      // TrustArc
+      '#truste-consent-required',
+      '.trustarc-reject-btn',
+      '.truste-button2',
+
       // Generic classes
       '.cookie-reject',
       '.reject-cookies',
@@ -284,9 +314,12 @@ export class ConsentTester {
           // Detect vendor
           let vendor: string | undefined;
           if (selector.includes('onetrust')) vendor = 'OneTrust';
-          else if (selector.includes('Cookiebot')) vendor = 'Cookiebot';
+          else if (selector.includes('Cookiebot') || selector.includes('Cybot')) vendor = 'Cookiebot';
+          else if (selector.includes('osano')) vendor = 'Osano';
+          else if (selector.includes('termly') || selector.includes('t-')) vendor = 'Termly';
+          else if (selector.includes('truste') || selector.includes('trustarc')) vendor = 'TrustArc';
           else if (selector.includes('cc-')) vendor = 'Cookie Consent';
-          
+
           return { found: true, vendor };
         }
       } catch (error) {

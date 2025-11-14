@@ -1,6 +1,7 @@
 import { FrameworkRule } from './types';
 import { ConsentTestResult } from '../scanner/types';
 import { AggregatedScanResults } from '../scanner/types';
+import { CookieAnalyzer } from '../scanner/cookieAnalyzer';
 
 export const gdprRules: FrameworkRule[] = [
   {
@@ -12,8 +13,16 @@ export const gdprRules: FrameworkRule[] = [
     description: 'GDPR requires explicit consent before setting non-essential cookies',
     check: (data: { consent: ConsentTestResult }) => {
       const beforeConsent = data.consent.beforeConsent;
-      // If more than 1-2 cookies before consent (assuming strictly necessary), it's likely a violation
-      return beforeConsent.cookies.length > 2;
+      const analyzer = new CookieAnalyzer();
+      const analyses = analyzer.analyzeCookies(beforeConsent.cookies);
+
+      // Only flag cookies that are analytics, advertising, or social
+      // Exclude necessary and functional cookies, and consent management cookies
+      const nonEssentialCookies = analyses.filter(a =>
+        a.category === 'analytics' || a.category === 'advertising' || a.category === 'social'
+      );
+
+      return nonEssentialCookies.length > 0;
     },
     recommendation: 'Ensure only strictly necessary cookies are set before user consent. All analytics, marketing, and non-essential cookies should only load after explicit consent.'
   },
@@ -118,16 +127,22 @@ export const gdprRules: FrameworkRule[] = [
 
 export function checkGDPR(scan: AggregatedScanResults, consent: ConsentTestResult): any[] {
   const violations: any[] = [];
-  
+  const analyzer = new CookieAnalyzer();
+
   for (const rule of gdprRules) {
     const isViolation = rule.check({ scan, consent });
-    
+
     if (isViolation) {
       const affectedItems: string[] = [];
-      
+
       // Collect affected items based on rule
       if (rule.id === 'gdpr-001') {
-        affectedItems.push(...consent.beforeConsent.cookies.map(c => c.name));
+        // Only include non-essential cookies
+        const analyses = analyzer.analyzeCookies(consent.beforeConsent.cookies);
+        const nonEssential = analyses.filter(a =>
+          a.category === 'analytics' || a.category === 'advertising' || a.category === 'social'
+        );
+        affectedItems.push(...nonEssential.map(a => `${a.cookie.name} (${a.actualVendor})`));
       } else if (rule.id === 'gdpr-002') {
         affectedItems.push(...consent.beforeConsent.scripts
           .filter(s => s.isThirdParty)
@@ -136,7 +151,7 @@ export function checkGDPR(scan: AggregatedScanResults, consent: ConsentTestResul
       } else if (rule.id === 'gdpr-005') {
         affectedItems.push(...scan.thirdPartyCookies.map(c => `${c.name} (${c.domain})`));
       }
-      
+
       violations.push({
         severity: rule.severity,
         framework: rule.framework,
@@ -148,6 +163,6 @@ export function checkGDPR(scan: AggregatedScanResults, consent: ConsentTestResul
       });
     }
   }
-  
+
   return violations;
 }

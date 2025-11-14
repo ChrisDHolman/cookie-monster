@@ -307,6 +307,8 @@ Return ONLY valid JSON (no markdown, no code fences):
       const parsed = JSON.parse(cleaned);
       return {
         executiveSummary: parsed.executiveSummary || '',
+        cookieSecurityAssessment: parsed.cookieSecurityAssessment || 'No assessment available',
+        preConsentViolations: parsed.preConsentViolations || 'No violations detected',
         keyFindings: parsed.keyFindings || [],
         criticalIssues: parsed.criticalIssues || [],
         recommendations: parsed.recommendations || [],
@@ -334,6 +336,8 @@ Return ONLY valid JSON (no markdown, no code fences):
 
     return {
       executiveSummary: `This website received a compliance score of ${score}/100 (${outlook}). ${results.summary.criticalIssues} critical issues and ${results.summary.warningIssues} warnings were identified across GDPR, CCPA, and ePrivacy frameworks.`,
+      cookieSecurityAssessment: `${results.details.thirdPartyCookies} third-party cookies detected. ${results.details.cookiesBeforeConsent} cookies set before consent.`,
+      preConsentViolations: results.details.cookiesBeforeConsent > 0 ? `${results.details.cookiesBeforeConsent} non-essential cookies were set before user consent, which may violate GDPR and ePrivacy requirements.` : 'No pre-consent violations detected.',
       keyFindings: [
         `${results.details.totalCookies} cookies found (${results.details.thirdPartyCookies} third-party)`,
         `${results.details.cookiesBeforeConsent} cookies set before user consent`,

@@ -2,21 +2,31 @@
 
 A comprehensive CLI tool for scanning websites to detect GDPR, CCPA, and ePrivacy Directive compliance issues related to cookies, tracking scripts, and consent mechanisms.
 
+> **✅ Latest Update**: Fixed critical bug in compliance checking that was incorrectly flagging necessary cookies (consent management, security) as violations. The scanner now uses smart categorization to only flag actual violations.
+
 ## Features
 
 - 🕷️ **Full Site Crawling**: Automatically discovers and scans all pages on a domain
-- 🍪 **Cookie Detection**: Identifies first-party and third-party cookies
+- 🍪 **Advanced Cookie Analysis**: Identifies first-party and third-party cookies with 90+ vendor patterns
+  - Cookie syncing/data sharing detection
+  - Unnecessary/excessive cookie identification
+  - Risk level scoring with detailed reasons
 - 📜 **Script Analysis**: Detects tracking scripts, analytics, advertising, and social media widgets
 - ✅ **Consent Testing**: Tests cookie consent mechanisms (Accept All, Reject All scenarios)
+  - Supports 6 consent vendors: OneTrust, Cookiebot, Cookie Consent, Osano, Termly, TrustArc
 - ⚖️ **Multi-Framework Compliance**: Checks against GDPR, CCPA, and ePrivacy Directive
-- 📊 **Detailed Reporting**: Terminal summary + comprehensive HTML reports
+  - Smart categorization: only flags actual violations (analytics, advertising, social cookies)
+  - Correctly excludes necessary cookies (consent management, security)
+- 🤖 **AI-Powered Summaries**: Optional Claude-powered compliance report generation
+- 📊 **Detailed Reporting**: Terminal summary + comprehensive HTML + JSON reports
+- ✅ **Comprehensive Test Suite**: 117 tests with Jest and TypeScript
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd web-compliance-scanner
+git clone https://github.com/ChrisDHolman/cookie-monster.git
+cd cookie-monster
 
 # Install dependencies
 npm install
@@ -63,7 +73,7 @@ npm run scan -- scan https://example.com --depth 3 --delay 1500 --output ./repor
 
 ## Output
 
-The scanner generates two types of reports:
+The scanner generates three types of reports:
 
 ### 1. Terminal Output
 
@@ -73,6 +83,7 @@ A concise summary displayed in your terminal with:
 - Summary statistics
 - Critical issues and warnings
 - Positive findings
+- AI-powered compliance assessment (if API key configured)
 
 ### 2. HTML Report
 
@@ -82,9 +93,21 @@ A detailed HTML report saved to the output directory containing:
 - Complete list of issues with severity levels
 - Affected items for each issue
 - Actionable recommendations
+- Cookie analysis tables
 - Positive findings
 
 Reports are saved as: `compliance-report-[domain]-[date].html`
+
+### 3. JSON Report
+
+A machine-readable JSON report containing:
+- Complete scan results and raw data
+- All cookie and script detections
+- Consent test results (before/after accept/after reject)
+- Cookie analysis with vendor detection and risk scoring
+- All compliance violations with affected items
+
+Reports are saved as: `compliance-report-[domain]-[date].json`
 
 ## What It Scans For
 
@@ -94,19 +117,26 @@ Reports are saved as: `compliance-report-[domain]-[date].html`
 - Cookie expiration times
 - HttpOnly and Secure flags
 
-### Scripts & Trackers
-- Google Analytics, Tag Manager
-- Facebook Pixel
-- Advertising networks (DoubleClick, AdSense)
-- Marketing automation tools
-- Social media widgets
-- A/B testing tools
+### Scripts & Trackers (90+ Vendor Patterns)
+**Analytics**: Google Analytics (GA4, Universal, Legacy), Microsoft Clarity, Hotjar, Mixpanel, Segment, Heap, HubSpot
+
+**Advertising**: Google Ads, DoubleClick, Facebook/Meta Pixel, Taboola, Outbrain, Criteo, AddThis, MediaMath
+
+**Social Media**: LinkedIn, Twitter/X, Pinterest, TikTok, Facebook
+
+**Marketing Automation**: HubSpot, Marketo, Salesforce Marketing Cloud, Pardot, Vimeo
+
+**E-commerce**: Shopify
+
+**Performance**: Cloudflare (security/functional)
+
+**A/B Testing**: Optimizely, VWO
 
 ### Consent Mechanisms
 - Presence of cookie consent UI
 - "Accept All" functionality
 - "Reject All" functionality
-- Consent vendor detection (OneTrust, Cookiebot, etc.)
+- Consent vendor detection: **OneTrust, Cookiebot, Cookie Consent, Osano, Termly, TrustArc**
 
 ### Compliance Checks
 
@@ -153,12 +183,27 @@ npm run dev -- scan https://example.com
 # Build for production
 npm run build
 
-# Run tests (when implemented)
+# Run all tests (117 tests)
 npm test
+
+# Run specific test file
+npm test -- tests/scanner/cookieAnalyzer.test.ts
+
+# Run tests in watch mode
+npm test -- --watch
 
 # Lint code
 npm run lint
 ```
+
+## Testing
+
+The project includes comprehensive test coverage:
+- **urlQueue**: 32 tests covering URL normalization, queue management, and domain validation
+- **cookieAnalyzer**: 68 tests covering vendor detection, risk scoring, cookie syncing detection
+- **consentTester**: 17 tests covering all 6 supported consent vendors
+
+Run tests with: `npm test`
 
 ## Configuration
 
@@ -175,6 +220,15 @@ Comma-separated list of compliance frameworks to check:
 - `eprivacy` - ePrivacy Directive
 
 Default checks all three frameworks.
+
+### AI-Powered Summaries (Optional)
+To enable AI-powered compliance summaries, set your Anthropic API key:
+
+```bash
+export ANTHROPIC_API_KEY=your_api_key_here
+```
+
+Without the API key, the scanner will use a fallback summary generator (no AI features).
 
 ## Limitations
 
@@ -220,13 +274,25 @@ This tool provides automated compliance scanning and should be used as a startin
 
 ## Roadmap
 
+### ✅ Completed
+- [x] Comprehensive test suite (117 tests with Jest)
+- [x] Enhanced cookie vendor database (90+ patterns)
+- [x] Cookie syncing/data sharing detection
+- [x] Support for 6 consent vendors (OneTrust, Cookiebot, Cookie Consent, Osano, Termly, TrustArc)
+- [x] Unnecessary/excessive cookie detection
+- [x] AI-powered summary generation (Claude integration)
+- [x] JSON report export
+
+### 🚧 In Progress
+- [ ] Dark pattern detection (3-4 patterns identified)
+- [ ] Compliance rule engine tests
+
+### 📋 Planned
 - [ ] Privacy policy parsing and analysis
-- [ ] Dark pattern detection improvements
-- [ ] Support for more consent vendors
-- [ ] Change tracking over time
+- [ ] Change tracking over time (database layer)
 - [ ] API endpoint scanning
 - [ ] PDF report generation
-- [ ] CI/CD integration
+- [ ] CI/CD integration (GitHub Actions examples)
 - [ ] Docker support
 
 ## Support
